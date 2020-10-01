@@ -1,2 +1,4 @@
-# monkey_jump
-Tarea 1; CC3501
+# Monkey Jump
+Este repo corresponde a la Tarea 1 del curso CC3501.
+
+Aquí pondré... algo.
