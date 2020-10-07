@@ -12,11 +12,12 @@ class Monkey:
         self.y_pos=0.2
         self.h_speed=0
         self.v_speed=0
-        self.airborne=False
+        self.airborne=True
         self.moving_left=False
         self.moving_right=False
+        self.cObj=None
         self.k=0
-        self.isColliding=False
+
         gpuBasicMonke=es.toGPUShape(bs.createColorQuad(117/255,73/255,29/255))
     
         monke=sg.SceneGraphNode('monkey')
@@ -46,19 +47,34 @@ class Monkey:
             return
         self.airborne=True
         self.v_speed=0.1
-    # def collide(self, env: 'Environment'):
-    #     fpos: List[Union['Floor', 'Platform', None]]
-    #     fpos=env.factPos()
-    #     for p in fpos:
-    #         if p.get_xpos()-p.size/2<=self.x_pos-0.1<=p.get_xpos()+p.size/2 or p.get_xpos()+p.size/2>=self.x_pos+0.1>=p.get_xpos()-p.size/2:
-    #             if p.get_ypos()<=(self.y_pos-0.2) and p.get_ypos()+0.05>=(self.y_pos-0.2) and self.v_speed<=0:
-    #                 print('platpos=',p.get_ypos()+0.05,'\n','playerpos=',self.y_pos-0.2)
-    #                 self.y_pos=p.get_ypos()+0.25
-    #                 self.v_speed=0
-    #                 self.airborne=False
-    #         else:
-    #             self.airborne=True
+        self.y_pos+=0.01
 
+    def collide(self, env: 'Environment'):
+        fpos: List[Union['Floor', 'Platform', None]]
+        fpos=env.factPos()
+        # print(self.cObj)
+        if self.cObj==None:
+            for p in fpos:
+                if p.get_xpos()-p.size/2<=self.x_pos-0.1<=p.get_xpos()+p.size/2 or p.get_xpos()-p.size/2<=self.x_pos+0.1<=p.get_xpos()+p.size/2:
+                    if self.v_speed>0: ##Subiendo Colisión por abajo
+                        if p.get_ypos()+0.05>=(self.y_pos+0.2) and p.get_ypos()-0.05<=(self.y_pos+0.2) and self.airborne:
+                            # print('up collision')
+                            self.y_pos=p.get_ypos()-0.25
+                            self.v_speed=0
+                            
+                    if self.v_speed<0:
+                        if p.get_ypos()+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=p.get_ypos()-0.05 and self.airborne:
+                            # print('down collision')                        
+                            self.y_pos=p.get_ypos()+0.25
+                            self.v_speed=0
+                            self.airborne=False
+                            self.cObj=p
+        else:
+            if not (self.cObj.get_xpos()-self.cObj.size/2<=self.x_pos-0.1<=self.cObj.get_xpos()+self.cObj.size/2 
+            or self.cObj.get_xpos()-self.cObj.size/2<=self.x_pos+0.1<=self.cObj.get_xpos()+self.cObj.size/2) or self.airborne:
+                self.cObj=None
+                self.airborne=True
+     
     def update(self):
         #aceleración sujeta a una velocidad máxima
         if self.moving_right and self.h_speed<=0.05:
@@ -71,29 +87,15 @@ class Monkey:
                 self.k-=1
             if self.k<0:
                 self.k+=1
-        if self.airborne:
-            self.v_speed-=0.005
-            # if self.h_speed>0:
-            #     self.k-=1
-            
+        #Gravedad
+        if self.airborne: 
+            if self.v_speed>=-0.1:
+                self.v_speed-=0.005
+
         # print(self.h_speed)
         self.h_speed=self.k*0.01
         self.x_pos+=self.h_speed
-        # if self.x_pos>=0.9:
-        #     print('choque')
-        #     self.moving_right=False
-        #     self.h_speed=0
-        #     self.x_pos=0.9
-        # if self.x_pos<-0.9:
-        #     self.moving_left=False
-        #     self.h_speed=0
-        #     self.x_pos=-0.9
-        # if self.y_pos<-0.7 and self.airborne:
-        #     self.v_speed=0
-        #     self.y_pos=-0.7
-        #     self.airborne=False
         self.y_pos+=self.v_speed
-
 
 
 class Platform:
@@ -131,11 +133,11 @@ class Floor:
 
     def __init__(self):
         gpuBasicFloor=es.toGPUShape(bs.createColorQuad(102/255,52/255,0/255))
-        self.y_pos=-1
+        self.y_pos=-0.95
         self.size=2
         #Floor
         floor=sg.SceneGraphNode('floor')
-        floor.transform=tr.matmul([tr.translate(0,self.y_pos,0),tr.scale(self.size,0.2,0)])
+        floor.transform=tr.matmul([tr.translate(0,self.y_pos,0),tr.scale(self.size,0.1,0)])
         floor.childs += [gpuBasicFloor]
 
         #floor position
@@ -171,7 +173,7 @@ class Environment:
                         platform=Platform()
                         platform.set_xpos(0.7*(i-1))
                         platform.set_ypos(-0.1+(k-1)*0.7)
-                        print(platform.get_ypos())
+                        # print(platform.get_ypos())
                         platform.update()
                         self.objects.append(platform)
                         environmentPos.childs+=[platform.model]
