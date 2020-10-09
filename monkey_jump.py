@@ -3,7 +3,7 @@
 ###############################
 # A GAME BY: GUSTAVO RIVERA   #
 ###############################
-
+#Version 0.2
 
 #Imports
 import glfw # Usada para interactuar con un usuario (mouse, teclado, etc)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         #Aquí se dibuja todo todillo
-        # monkey.collide(environment)
+        monkey.collide(environment)
         monkey.update()
         monkey.draw(pipeline)
         environment.update()
