@@ -8,10 +8,11 @@ from typing import List, Union
 class Monkey:
 
     def __init__(self):
-        self.x_pos=0.7
-        self.y_pos=0.2
+        self.x_pos=0
+        self.y_pos=-0.5
         self.h_speed=0
         self.v_speed=0
+        self.winCond=0
         self.airborne=True
         self.moving_left=False
         self.moving_right=False
@@ -52,23 +53,29 @@ class Monkey:
     def collide(self, env: 'Environment'):
         fpos: List[Union['Floor', 'Platform', None]]
         fpos=env.factPos()
-        # print(self.cObj)
+        #print(self.cObj)
         if self.cObj==None:
             for p in fpos:
+                realPos=p.get_ypos()+env.y_pos
                 if p.get_xpos()-p.size/2<=self.x_pos-0.1<=p.get_xpos()+p.size/2 or p.get_xpos()-p.size/2<=self.x_pos+0.1<=p.get_xpos()+p.size/2:
+                    if isinstance(p,Banana):
+                        if (realPos+0.05>=(self.y_pos+0.2) and realPos-0.05<=(self.y_pos+0.2) and self.airborne) or (realPos+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=realPos-0.05 and self.airborne):
+                            self.winCond=1
+                            return
                     if self.v_speed>0: ##Subiendo Colisión por abajo
-                        if p.get_ypos()+0.05>=(self.y_pos+0.2) and p.get_ypos()-0.05<=(self.y_pos+0.2) and self.airborne:
+                        if realPos+0.05>=(self.y_pos+0.2) and realPos-0.05<=(self.y_pos+0.2) and self.airborne:
                             # print('up collision')
-                            self.y_pos=p.get_ypos()-0.25
+                            self.y_pos=realPos-0.25
                             self.v_speed=0
-                            
+                    
                     if self.v_speed<0:
-                        if p.get_ypos()+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=p.get_ypos()-0.05 and self.airborne:
+                        if realPos+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=realPos-0.05 and self.airborne:
                             # print('down collision')                        
-                            self.y_pos=p.get_ypos()+0.25
+                            self.y_pos=realPos+0.25
                             self.v_speed=0
                             self.airborne=False
                             self.cObj=p
+
         else:
             if not (self.cObj.get_xpos()-self.cObj.size/2<=self.x_pos-0.1<=self.cObj.get_xpos()+self.cObj.size/2 
             or self.cObj.get_xpos()-self.cObj.size/2<=self.x_pos+0.1<=self.cObj.get_xpos()+self.cObj.size/2) or self.airborne:
@@ -76,6 +83,8 @@ class Monkey:
                 self.airborne=True
      
     def update(self):
+        if self.winCond==1 or self.winCond==-1:
+            return
         #aceleración sujeta a una velocidad máxima
         if self.moving_right and self.h_speed<=0.05:
             self.k+=1
@@ -90,8 +99,10 @@ class Monkey:
         #Gravedad
         if self.airborne: 
             if self.v_speed>=-0.1:
-                self.v_speed-=0.005
-
+                self.v_speed-=0.005 
+        if self.y_pos+0.2<-1:
+            self.winCond=-1
+            print('You Died')
         # print(self.h_speed)
         self.h_speed=self.k*0.01
         self.x_pos+=self.h_speed
@@ -152,15 +163,38 @@ class Floor:
         return self.y_pos
     def get_xpos(self):
         return 0
+
+class Banana:
+    def __init__(self):
+        gpuBasicBanana=es.toGPUShape(bs.createColorQuad(255/255,255/255,52/255))
+        self.y_pos=0
+        self.size=0.2
+        banana=sg.SceneGraphNode('banana')
+        banana.transform=tr.scale(0.2,0.2,0)
+        banana.childs+=[gpuBasicBanana]
+        
+        bananaPos=sg.SceneGraphNode('bananaPos')
+        bananaPos.childs+=[banana]
+        self.model=bananaPos
+    def set_ypos(self,y):
+        self.y_pos=y
+        self.model.transform=tr.translate(0,y,0)
+    def get_xpos(self):
+        return 0
+    def get_ypos(self):
+        return self.y_pos
+
 #ambiente
 class Environment:
 
     def __init__(self,mapa):
         #piso
         floor=Floor()
+        #banana
+        banana=Banana()
         #plataformas
         k=0
-        self.objects=[floor]
+        self.objects=[floor,banana]
 
         environmentPos=sg.SceneGraphNode('environmentPos')
         environmentPos.childs+=[floor.model]
@@ -177,7 +211,9 @@ class Environment:
                         platform.update()
                         self.objects.append(platform)
                         environmentPos.childs+=[platform.model]
-                
+        k+=1
+        banana.set_ypos(0.7*(k-1))
+        environmentPos.childs+=[banana.model]
         self.model=environmentPos
         self.y_pos=0
 
@@ -198,3 +234,16 @@ class Environment:
                 factiblePositions+=[x]
         #print(factiblePositions)
         return factiblePositions
+
+class Camera:
+    def __init__(self,monke: 'Monkey',env: 'Environment'):
+        self.monkey=monke
+        self.env=env
+
+    def update(self):
+        if self.monkey.winCond==0:
+            if self.monkey.y_pos>0.25:
+                self.move()
+    def move(self):
+        self.monkey.y_pos-=0.02
+        self.env.y_pos-=0.02

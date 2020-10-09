@@ -6,13 +6,14 @@ from typing import Union
 
 class Controller:
     model: Union['Monkey',None]
+    cam: Union['Camera',None]
     def __init__(self):
         self.model=None
-        self.env=None
+        self.cam=None
     def setModel(self,model):
         self.model=model
-    def bindEnvironment(self,env):
-        self.env=env
+    def bindCamera(self,cam):
+        self.cam=cam
     def on_key(self, window, key, scancode, action, mods):
         if key==glfw.KEY_A:
             if action==glfw.PRESS:
@@ -28,7 +29,7 @@ class Controller:
             self.model.jump()               
         if key==glfw.KEY_SPACE:
             if action==glfw.PRESS:
-                self.env.move(-1)
+                self.cam.move()
         if key == glfw.KEY_ESCAPE:
             sys.exit()
 
