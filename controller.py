@@ -27,9 +27,6 @@ class Controller:
                 self.model.stop()
         if key==glfw.KEY_W and action==glfw.PRESS:
             self.model.jump()               
-        if key==glfw.KEY_SPACE:
-            if action==glfw.PRESS:
-                self.cam.move()
         if key == glfw.KEY_ESCAPE:
             sys.exit()
 

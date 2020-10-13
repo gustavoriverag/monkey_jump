@@ -4,6 +4,7 @@ import transformations as tr
 import basic_shapes as bs
 import csv
 from typing import List, Union
+from OpenGL.GL import *
 
 class Monkey:
 
@@ -22,7 +23,7 @@ class Monkey:
         gpuBasicMonke=es.toGPUShape(bs.createColorQuad(117/255,73/255,29/255))
     
         monke=sg.SceneGraphNode('monkey')
-        monke.transform=tr.scale(0.2,0.4,0)
+        monke.transform=tr.scale(0.2,0.3,0)
         monke.childs += [gpuBasicMonke]
 
         monkeyPos=sg.SceneGraphNode('monkeyPos')
@@ -30,6 +31,7 @@ class Monkey:
         self.model = monkeyPos
 
     def draw(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
         self.model.transform=tr.translate(self.x_pos,self.y_pos,0)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
@@ -59,19 +61,19 @@ class Monkey:
                 realPos=p.get_ypos()+env.y_pos
                 if p.get_xpos()-p.size/2<=self.x_pos-0.1<=p.get_xpos()+p.size/2 or p.get_xpos()-p.size/2<=self.x_pos+0.1<=p.get_xpos()+p.size/2:
                     if isinstance(p,Banana):
-                        if (realPos+0.05>=(self.y_pos+0.2) and realPos-0.05<=(self.y_pos+0.2) and self.airborne) or (realPos+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=realPos-0.05 and self.airborne):
+                        if (realPos+0.05>=(self.y_pos+0.15) and realPos-0.05<=(self.y_pos+0.15) and self.airborne) or (realPos+0.05>=(self.y_pos-0.15) and self.y_pos-0.15>=realPos-0.05 and self.airborne):
                             self.winCond=1
                             return
                     if self.v_speed>0: ##Subiendo Colisión por abajo
-                        if realPos+0.05>=(self.y_pos+0.2) and realPos-0.05<=(self.y_pos+0.2) and self.airborne:
+                        if realPos+0.05>=(self.y_pos+0.15) and realPos-0.05<=(self.y_pos+0.15) and self.airborne:
                             # print('up collision')
-                            self.y_pos=realPos-0.25
+                            self.y_pos=realPos-0.2
                             self.v_speed=0
                     
                     if self.v_speed<0:
                         if realPos+0.05>=(self.y_pos-0.2) and self.y_pos-0.2>=realPos-0.05 and self.airborne:
                             # print('down collision')                        
-                            self.y_pos=realPos+0.25
+                            self.y_pos=realPos+0.2 
                             self.v_speed=0
                             self.airborne=False
                             self.cObj=p
@@ -103,7 +105,15 @@ class Monkey:
         if self.y_pos+0.2<-1:
             self.winCond=-1
             print('You Died')
-        # print(self.h_speed)
+        if self.x_pos+0.1>1:
+            self.moving_right=False
+            self.x_pos=0.9
+            self.k=0
+        if self.x_pos-0.1<-1:
+            self.moving_left=False
+            self.x_pos=-0.9
+            self.k=0
+
         self.h_speed=self.k*0.01
         self.x_pos+=self.h_speed
         self.y_pos+=self.v_speed
@@ -115,12 +125,11 @@ class Platform:
         self.x_pos=0
         self.y_pos=0
         self.size=0.5
-        gpuBasicPlatform=es.toGPUShape(bs.createColorQuad(102/255,51/255,0/255))
-
+        gpuTextPlatform=es.toGPUShape(bs.createTextureQuad("plataforma.png"),GL_REPEAT,GL_NEAREST)
         #creating the platform
         platform=sg.SceneGraphNode('platform')
         platform.transform=tr.scale(self.size,0.1,0)
-        platform.childs += [gpuBasicPlatform]
+        platform.childs += [gpuTextPlatform]
 
         platformPosition=sg.SceneGraphNode('platformPos')
         platformPosition.childs += [platform]
@@ -143,13 +152,13 @@ class Platform:
 class Floor:
 
     def __init__(self):
-        gpuBasicFloor=es.toGPUShape(bs.createColorQuad(102/255,52/255,0/255))
+        gpuTextFloor=es.toGPUShape(bs.createTextureQuad("plataforma.png",4,1),GL_REPEAT,GL_NEAREST)
         self.y_pos=-0.95
         self.size=2
         #Floor
         floor=sg.SceneGraphNode('floor')
         floor.transform=tr.matmul([tr.translate(0,self.y_pos,0),tr.scale(self.size,0.1,0)])
-        floor.childs += [gpuBasicFloor]
+        floor.childs += [gpuTextFloor]
 
         #floor position
         floorPosition=sg.SceneGraphNode('floorPos')
@@ -166,12 +175,12 @@ class Floor:
 
 class Banana:
     def __init__(self):
-        gpuBasicBanana=es.toGPUShape(bs.createColorQuad(255/255,255/255,52/255))
+        gpuTextBanana=es.toGPUShape(bs.createTextureQuad("bananas.png"),GL_REPEAT,GL_NEAREST)
         self.y_pos=0
         self.size=0.2
         banana=sg.SceneGraphNode('banana')
         banana.transform=tr.scale(0.2,0.2,0)
-        banana.childs+=[gpuBasicBanana]
+        banana.childs+=[gpuTextBanana]
         
         bananaPos=sg.SceneGraphNode('bananaPos')
         bananaPos.childs+=[banana]
@@ -207,7 +216,6 @@ class Environment:
                         platform=Platform()
                         platform.set_xpos(0.7*(i-1))
                         platform.set_ypos(-0.1+(k-1)*0.7)
-                        # print(platform.get_ypos())
                         platform.update()
                         self.objects.append(platform)
                         environmentPos.childs+=[platform.model]
@@ -218,21 +226,25 @@ class Environment:
         self.y_pos=0
 
     def draw(self,pipeline):
-        sg.drawSceneGraphNode(self.model,pipeline,'transform')
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model, pipeline,'transform')
     
     def move(self,y):
         self.y_pos=y
 
     def update(self):
+        drawableObjs=[]
+        for x in self.objects:
+            if x.get_ypos()+self.y_pos<=1.05 and x.get_ypos()+self.y_pos>=-1:
+                drawableObjs+=[x.model]            
+        self.model.childs=drawableObjs
         self.model.transform=tr.translate(0,self.y_pos,0)
     
     def factPos(self):
         factiblePositions=[]
         for x in self.objects:
             if x.get_ypos()+self.y_pos<=1 and x.get_ypos()+self.y_pos>=-1:
-                #print(x.get_ypos())
                 factiblePositions+=[x]
-        #print(factiblePositions)
         return factiblePositions
 
 class Camera:
