@@ -3,7 +3,7 @@
 ###############################
 # A GAME BY: GUSTAVO RIVERA   #
 ###############################
-#Version 0.2
+#Version 0.3
 
 #Imports
 import glfw # Usada para interactuar con un usuario (mouse, teclado, etc)
@@ -60,7 +60,8 @@ if __name__ == "__main__":
     monkey=Monkey()
     controller.setModel(monkey)
     environment=Environment(mapa)
-    controller.bindEnvironment(environment)
+    cam=Camera(monkey,environment)
+    controller.bindCamera(cam)
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -78,6 +79,7 @@ if __name__ == "__main__":
         monkey.draw(pipeline)
         environment.update()
         environment.draw(pipeline)
+        cam.update()
     
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
