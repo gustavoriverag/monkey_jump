@@ -3,7 +3,7 @@
 ###############################
 # A GAME BY: GUSTAVO RIVERA   #
 ###############################
-#Version 0.3
+#Version 0.4
 
 #Imports
 import glfw # Usada para interactuar con un usuario (mouse, teclado, etc)
@@ -25,9 +25,10 @@ from modelos import *
 controller=Controller()
     
 if __name__ == "__main__":
-    if sys.argv[1] != None:
-        mapa=sys.argv[1]
-        print(mapa)
+    # if sys.argv[1] != None:
+    #     mapa=sys.argv[1]
+    #     print(mapa)
+    mapa="structure.csv"
     # Initialize glfw
     if not glfw.init():
         sys.exit()
@@ -49,10 +50,13 @@ if __name__ == "__main__":
 
     # Assembling the shader program (pipeline) with both shaders
     pipeline = es.SimpleTransformShaderProgram()
-    
+    pipeline_text=es.SimpleTextureTransformShaderProgram()
     # Telling OpenGL to use our shader programa
     glUseProgram(pipeline.shaderProgram)
 
+    # Enabling transparencies
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     # Setting up the clear screen color
     glClearColor(0.3, 0.85, 0.3, 1.0)
 
@@ -74,11 +78,11 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         #Aquí se dibuja todo todillo
+        environment.update()
+        environment.draw(pipeline_text)
         monkey.collide(environment)
         monkey.update()
         monkey.draw(pipeline)
-        environment.update()
-        environment.draw(pipeline)
         cam.update()
     
         # Once the render is done, buffers are swapped, showing only the complete scene.

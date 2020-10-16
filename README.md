@@ -1,4 +1,4 @@
-# Monkey Jump v0.2
+# Monkey Jump v0.4
 Este repo corresponde a la Tarea 1 del curso CC3501.
 
 TO DO:
