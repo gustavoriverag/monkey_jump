@@ -28,5 +28,6 @@ class Controller:
         if key==glfw.KEY_W and action==glfw.PRESS:
             self.model.jump()               
         if key == glfw.KEY_ESCAPE:
+            glfw.terminate()
             sys.exit()
 

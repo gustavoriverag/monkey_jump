@@ -3,7 +3,7 @@
 ###############################
 # A GAME BY: GUSTAVO RIVERA   #
 ###############################
-#Version 0.4
+#Version 0.5
 
 #Imports
 import glfw # Usada para interactuar con un usuario (mouse, teclado, etc)
@@ -25,10 +25,9 @@ from modelos import *
 controller=Controller()
     
 if __name__ == "__main__":
-    # if sys.argv[1] != None:
-    #     mapa=sys.argv[1]
-    #     print(mapa)
-    mapa="structure.csv"
+    if sys.argv[1] != None:
+        mapa=sys.argv[1]
+
     # Initialize glfw
     if not glfw.init():
         sys.exit()
@@ -49,10 +48,10 @@ if __name__ == "__main__":
     glfw.set_key_callback(window, controller.on_key)
 
     # Assembling the shader program (pipeline) with both shaders
-    pipeline = es.SimpleTransformShaderProgram()
+    pipeline=es.SimpleTransformShaderProgram()
     pipeline_text=es.SimpleTextureTransformShaderProgram()
     # Telling OpenGL to use our shader programa
-    glUseProgram(pipeline.shaderProgram)
+
 
     # Enabling transparencies
     glEnable(GL_BLEND)
@@ -66,6 +65,8 @@ if __name__ == "__main__":
     environment=Environment(mapa)
     cam=Camera(monkey,environment)
     controller.bindCamera(cam)
+    anim=EndAnimation()
+
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -78,13 +79,22 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         #Aquí se dibuja todo todillo
-        environment.update()
-        environment.draw(pipeline_text)
-        monkey.collide(environment)
-        monkey.update()
-        monkey.draw(pipeline)
-        cam.update()
-    
+        #Se dibuja y actualiza el ambiente
+        if monkey.winCond==0:
+            environment.update()
+            environment.draw(pipeline_text)
+            #Se actualiza, dibuja y detectan colisiones del mono
+            monkey.collide(environment)
+            monkey.update()
+            monkey.draw(pipeline_text)
+            #Se actualiza la cámara
+            cam.update()
+        #si se pierde, animar la muerte
+        if monkey.winCond==-1:
+            anim.deathAnimate(pipeline,pipeline_text)
+        #si se gana animar la victoria
+        if monkey.winCond==1:
+            anim.winAnimate(pipeline,pipeline_text)
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 
