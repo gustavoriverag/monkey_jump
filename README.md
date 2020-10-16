@@ -1,4 +1,4 @@
-# Monkey Jump v0.4
+# Monkey Jump v0.5
 Este repo corresponde a la Tarea 1 del curso CC3501.
 
 TO DO:
@@ -12,14 +12,14 @@ TO DO:
 
 -Movimiento del escenario (Listo)
 
--Movimiento del fondo
+-Movimiento del fondo (Listo)
 
--Fondo
+-Fondo (Listo)
 
--Texturas
+-Texturas (Listo)
 
--Animaciones
+-Animaciones (Listo)
 
--Bananas (Casi Listo, falta animación de victoria)
+-Bananas (Listo)
 
--Muerte (Casi Listo, falta animación de muerte)
+-Muerte (Listo)
